@@ -13,14 +13,12 @@ class GitMenu:
         branch = branch_result.stdout.strip() if branch_result.ok and branch_result.stdout else "unknown"
         return f"Repository: {Path(self.repo_dir_path).name}  |  Branch: {branch}"
 
-    def get_actions(self) -> list[str]:
-        prefix = "_git_"
-        actions = [
+    def get_actions(self, prefix: str = "_git_") -> list[str]:
+        return [
             name[len(prefix):]
             for name in type(self).__dict__
             if name.startswith(prefix)
-        ]
-        return actions + ["exit"]
+        ] + ["<< back"]
 
     def dispatch(self, method_name: str, *args, **kwargs) -> None:
         method = getattr(self, f"_git_{method_name}", None)
@@ -41,11 +39,7 @@ class GitMenu:
 
     def _run_submenu(self, prefix: str) -> None:
         full_prefix = f"_sub_{prefix}_"
-        actions = [
-            name[len(full_prefix):]
-            for name in type(self).__dict__
-            if name.startswith(full_prefix)
-        ] + ["<< back"]
+        actions = self.get_actions(full_prefix)
         while True:
             action = questionary.select(message=f"Select {prefix} action", choices=actions).ask()
             if action == "<< back":
@@ -67,10 +61,7 @@ class GitMenu:
         files = self._git_status()
         if not files:
             return
-        selected = questionary.checkbox(
-            message="Select files to stage",
-            choices=["all"] + files,
-        ).ask()
+        selected = questionary.checkbox(message="Select files to stage", choices=["all"] + files).ask()
         if not selected:
             return
         if "all" in selected:
@@ -85,6 +76,8 @@ class GitMenu:
 
     def _git_commit(self) -> None:
         commit_message = questionary.text(message="Type commit message").ask()
+        if not commit_message:
+            commit_message = "Auto commit"
         result = self.git.commit(message=commit_message)
         if not result.ok:
             print(f"Error: {result.error}")
@@ -143,56 +136,41 @@ class GitMenu:
         if not branch_result.ok:
             print(f"Error: {branch_result.error}")
             return
-        if not branch_result.lines:
-            print("No local branches found.")
-            return
-        selected_branch = questionary.select(
-            message="Choose branch to delete",
-            choices=branch_result.lines + ["<< back"],
-        ).ask()
+        selected_branch = questionary.select(message="Choose branch to delete", choices=branch_result.lines + ["<< back"]).ask()
         if not selected_branch or selected_branch == "<< back":
             return
         result = self.git.branch_delete(branch_name=selected_branch)
         if not result.ok:
             print(f"Error: {result.error}")
 
-    def _sub_branch_select(self) -> None:
+    def _sub_branch_local(self) -> None:
         branch_result = self.git.branch_local()
         if not branch_result.ok:
             print(f"Error: {branch_result.error}")
             return
-        if not branch_result.lines:
-            print("No local branches found.")
+        selected = questionary.autocomplete(message="Choose branch to switch to", choices=branch_result.lines + ["<< back"]).ask()
+        if not selected or selected == "<< back":
             return
-        selected_branch = questionary.select(
-            message="Choose branch to switch to",
-            choices=branch_result.lines + ["<< back"],
-        ).ask()
-        if not selected_branch or selected_branch == "<< back":
-            return
-        result = self.git.branch_select(branch_name=selected_branch)
+        result = self.git.branch_select(branch_name=selected)
         if not result.ok:
             print(f"Error: {result.error}")
-
-    def _sub_branch_local(self) -> None:
-        result = self.git.branch_local()
-        if not result.ok:
-            print(f"Error: {result.error}")
-            return
-        if result.lines:
-            self._paginate(result.lines)
-        else:
-            print("No local branches found.")
 
     def _sub_branch_remote(self) -> None:
-        result = self.git.branch_remote()
+        fetch_result = self.git.fetch()
+        if not fetch_result.ok:
+            print(f"Error: {fetch_result.error}")
+            return
+        branch_result = self.git.branch_remote()
+        if not branch_result.ok:
+            print(f"Error: {branch_result.error}")
+            return
+        branches = [b for b in branch_result.lines if not b.endswith("/HEAD")]
+        selected = questionary.autocomplete(message="Choose remote branch to checkout", choices=branches + ["<< back"]).ask()
+        if not selected or selected == "<< back":
+            return
+        result = self.git.branch_select_remote(remote_branch=selected)
         if not result.ok:
             print(f"Error: {result.error}")
-            return
-        if result.lines:
-            self._paginate(result.lines)
-        else:
-            print("No remote branches found.")
 
     def _git_cherry_pick(self) -> None:
         commit = questionary.text(message="Commit ID to cherry-pick").ask()
@@ -216,10 +194,7 @@ class GitMenu:
         if not candidates:
             print("No other branches to merge from.")
             return
-        source = questionary.select(
-            message=f"Merge into '{current}' from",
-            choices=candidates + ["<< back"],
-        ).ask()
+        source = questionary.select(message=f"Merge into '{current}' from", choices=candidates + ["<< back"]).ask()
         if not source or source == "<< back":
             return
         result = self.git.merge(branch_name=source)

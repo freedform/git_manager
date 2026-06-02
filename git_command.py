@@ -58,6 +58,11 @@ class GitCommand:
             command=["git", "-C", self.repo_path, "switch", branch_name]
         )
 
+    def branch_select_remote(self, remote_branch: str) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "switch", "--track", remote_branch]
+        )
+
     def branch_local(self) -> Result:
         return self.__run_command(
             command=["git", "-C", self.repo_path, "for-each-ref", "--format=%(refname:short)", "refs/heads/"]
@@ -76,6 +81,11 @@ class GitCommand:
     def commit(self, message: str) -> Result:
         return self.__run_command(
             command=["git", "-C", self.repo_path, "commit", "-m", message]
+        )
+
+    def fetch(self) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "fetch", "--prune"]
         )
 
     def pull(self) -> Result:
