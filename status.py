@@ -1,14 +1,7 @@
 class MainStatus:
-    def __init__(
-        self, 
-        base_dir: str = "", 
-        repo_list: list = {},
-    ) -> None:
+    def __init__(self, base_dir: str = "", repos: dict = None) -> None:
         self.base_dir = base_dir
-        self.repo_list = repo_list
-    
-    def get_status(self):
-        return {
-            "current_base_directory": self.base_dir,
-            "found_repositories": len(self.repo_list),
-        }
+        self.repos = repos if repos is not None else {}
+
+    def __str__(self) -> str:
+        return f"Base directory: {self.base_dir}  |  Repositories found: {len(self.repos)}"

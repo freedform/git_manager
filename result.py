@@ -1,12 +1,11 @@
 class Result:
-    def __init__(
-        self,
-        result: str,
-        status: str = "success",
-        error: str = None,
-    )-> None:
-        self.status = status
-        self.result = result
+    def __init__(self, stdout: str, ok: bool = True, error: str = None) -> None:
+        self.ok = ok
+        self.stdout = stdout
         self.error = error
-        self.lines = result.splitlines() if result else []
-        
+        self.lines = stdout.splitlines() if stdout else []
+
+    def __repr__(self) -> str:
+        if self.ok:
+            return f"Result(ok=True, stdout={self.stdout!r})"
+        return f"Result(ok=False, error={self.error!r})"

@@ -2,116 +2,147 @@ import subprocess
 from result import Result
 
 class GitCommand:
-    @staticmethod
-    def __run_command(command: list) -> Result:
+
+    def __init__(self, repo_path: str) -> None:
+        self.repo_path = repo_path
+
+    def __run_command(self, command: list) -> Result:
         try:
             result = subprocess.run(
                 command,
                 capture_output=True,
                 text=True,
-                timeout=5,
+                timeout=20,
                 check=True
             )
-            print(f"Raw result: '{result.stdout}'")
             return Result(
-                result=result.stdout
+                stdout=result.stdout
             )
-        
-        except subprocess.TimeoutExpired as timeout_exception:
+
+        except subprocess.TimeoutExpired as e:
             return Result(
-                result=None,
-                status="failed",
-                error=timeout_exception,
+                stdout=None,
+                ok=False,
+                error=str(e),
             )
 
         except subprocess.CalledProcessError as e:
             return Result(
-                result=None,
-                status="failed",
+                stdout=None,
+                ok=False,
                 error=e.stderr.strip()
             )
 
-    @staticmethod
-    def status(repo_path: str) -> str:
-        output = GitCommand.__run_command(
-            command=["git", "-C", repo_path, "status", "--porcelain"]
-        )
-        return output.lines
-
-    @staticmethod
-    def current_branch(repo_path: str) -> str:
-        result = GitCommand.__run_command(
-            command=["git", "-C", repo_path, "rev-parse", "--abbrev-ref", "HEAD"]
-        )
-        branch = result.result.strip()
-        return "DETACHED" if branch == "HEAD" else branch
-    
-
-    @staticmethod
-    def branch_create(repo_path: str, branch_name: str):
-        return GitCommand.__run_command(
-            command=["git", "-C", repo_path, "branch", branch_name]
-        )
-    
-    @staticmethod
-    def branch_delete(repo_path: str, branch_name: str):
-        return GitCommand.__run_command(
-            command=["git", "-C", repo_path, "branch", "-D", branch_name]
-        )
-    
-    @staticmethod
-    def branch_select(repo_path: str, branch_name: str):
-        return GitCommand.__run_command(
-            command=["git", "-C", repo_path, "switch", branch_name]
+    def status(self) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "status", "--porcelain"]
         )
 
-    @staticmethod
-    def branch_local(repo_path: str):
-        output = GitCommand.__run_command(
-            command=["git", "-C", repo_path, "for-each-ref", "--format=%(refname:short)", "refs/heads/"]
+    def current_branch(self) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "rev-parse", "--abbrev-ref", "HEAD"]
         )
 
-        if not output.result or output.result.startswith("ERROR"):
-            return output.lines
-
-        return output.lines
-
-
-    @staticmethod
-    def branch_remote(repo_path: str):
-        output = GitCommand.__run_command(
-            command=["git", "-C", repo_path, "for-each-ref", "--format=%(refname:short)", "refs/remotes/"]
+    def branch_create(self, branch_name: str) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "branch", branch_name]
         )
 
-        if not output.result or output.result.startswith("ERROR"):
-            return output.lines
-
-        return output.lines
-
-    @staticmethod
-    def add(repo_path: str, path: str = "."):
-        return GitCommand.__run_command(
-            command=["git", "-C", repo_path, "add", path]
+    def branch_delete(self, branch_name: str) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "branch", "-d", branch_name]
         )
 
-    @staticmethod
-    def commit(repo_path: str, message: str):
-        return GitCommand.__run_command(
-            command=["git", "-C", repo_path, "commit", "-m", message]
+    def branch_select(self, branch_name: str) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "switch", branch_name]
         )
 
-    @staticmethod
-    def pull(repo_path: str):
-        return GitCommand.__run_command(
-            command=["git", "-C", repo_path, "pull"]
+    def branch_local(self) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "for-each-ref", "--format=%(refname:short)", "refs/heads/"]
         )
 
-    @staticmethod
-    def push(repo_path: str):
-        current_branch = GitCommand.current_branch(repo_path=repo_path)
-        return GitCommand.__run_command(
-            command=["git", "-C", repo_path, "push", "origin", current_branch]
+    def branch_remote(self) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "for-each-ref", "--format=%(refname:short)", "refs/remotes/"]
         )
 
-    # def merge(repo_path: str) -> str:
-    # def cherry_pick(repo_path: str) -> str:
+    def add(self, path: str = ".") -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "add", path]
+        )
+
+    def commit(self, message: str) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "commit", "-m", message]
+        )
+
+    def pull(self) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "pull"]
+        )
+
+    def push(self, branch_name: str) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "push", "origin", branch_name]
+        )
+
+    def reset(self, commit: str, mode: str) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "reset", f"--{mode}", commit]
+        )
+
+    def log(self) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "log", "--oneline", "--decorate"]
+        )
+
+    def merge(self, branch_name: str) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "merge", branch_name]
+        )
+
+    def remote_list(self) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "remote"]
+        )
+
+    def remote_add(self, name: str, url: str) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "remote", "add", name, url]
+        )
+
+    def remote_remove(self, name: str) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "remote", "remove", name]
+        )
+
+    def cherry_pick(self, commit: str) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "cherry-pick", commit]
+        )
+
+    def tag_list(self) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "tag"]
+        )
+
+    def tag_create(self, name: str, message: str = None) -> Result:
+        if message:
+            return self.__run_command(
+                command=["git", "-C", self.repo_path, "tag", "-a", name, "-m", message]
+            )
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "tag", name]
+        )
+
+    def tag_delete(self, name: str) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "tag", "-d", name]
+        )
+
+    def tag_push(self, name: str) -> Result:
+        return self.__run_command(
+            command=["git", "-C", self.repo_path, "push", "origin", name]
+        )
