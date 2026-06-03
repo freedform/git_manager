@@ -95,6 +95,19 @@ class GitMenu:
         if not result.ok:
             print(f"Error: {result.error}")
 
+    def _git_push_force(self) -> None:
+        branch_result = self.git.current_branch()
+        if not branch_result.ok or not branch_result.stdout:
+            print("Error: Could not determine current branch")
+            return
+        branch = branch_result.stdout.strip()
+        if branch == "HEAD":
+            print("Error: Cannot push in detached HEAD state")
+            return
+        result = self.git.push(branch_name=branch, force=True)
+        if not result.ok:
+            print(f"Error: {result.error}")
+
     def _git_pull(self) -> None:
         result = self.git.pull()
         if not result.ok:

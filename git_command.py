@@ -93,10 +93,11 @@ class GitCommand:
             command=["git", "-C", self.repo_path, "pull"]
         )
 
-    def push(self, branch_name: str) -> Result:
-        return self.__run_command(
-            command=["git", "-C", self.repo_path, "push", "origin", branch_name]
-        )
+    def push(self, branch_name: str, force: bool = False) -> Result:
+        cmd = ["git", "-C", self.repo_path, "push", "origin", branch_name]
+        if force:
+            cmd.append("--force-with-lease")
+        return self.__run_command(command=cmd)
 
     def reset(self, commit: str, mode: str) -> Result:
         return self.__run_command(
