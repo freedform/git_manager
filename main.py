@@ -22,7 +22,7 @@ def run_repo_menu(repo_dir_path: str) -> None:
         print(git_menu)
         repo_action = questionary.select(message="Select the action", choices=git_menu.get_actions()).ask()
 
-        if repo_action == "exit":
+        if repo_action == "<< back":
             print("exiting...")
             break
         git_menu.dispatch(repo_action)
