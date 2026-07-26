@@ -1,6 +1,7 @@
 import questionary
 from pathlib import Path
 from git_handler import GitMenu
+from git_command import GitCommand
 from status import MainStatus
 from cli import parse_args
 
@@ -35,6 +36,7 @@ def main():
         "select_base_directory",
         "scan_base_directory",
         "select_repository",
+        "init_repository",
         "exit",
     ]
     while True:
@@ -54,6 +56,14 @@ def main():
                 continue
             select_repo = questionary.select(message="Select git repository", choices=main_status.repos.keys()).ask()
             run_repo_menu(repo_dir_path=main_status.repos[select_repo])
+        elif main_action == "init_repository":
+            init_path = questionary.path(message="Directory to initialize").ask()
+            if init_path:
+                result = GitCommand.init(init_path)
+                if result.ok:
+                    print(result.stdout.strip())
+                else:
+                    print(f"Error: {result.error}")
 
 
 if __name__ == "__main__":

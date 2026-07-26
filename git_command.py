@@ -157,3 +157,19 @@ class GitCommand:
         return self.__run_command(
             command=["git", "-C", self.repo_path, "push", "origin", name]
         )
+
+    @staticmethod
+    def init(path: str) -> Result:
+        try:
+            result = subprocess.run(
+                ["git", "init", "-b", "main", path],
+                capture_output=True,
+                text=True,
+                timeout=20,
+                check=True
+            )
+            return Result(stdout=result.stdout)
+        except subprocess.TimeoutExpired as e:
+            return Result(stdout=None, ok=False, error=str(e))
+        except subprocess.CalledProcessError as e:
+            return Result(stdout=None, ok=False, error=e.stderr.strip())
