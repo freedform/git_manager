@@ -40,7 +40,7 @@ def test_action_rejects_unknown_values():
 def test_bool_parameter_becomes_a_store_true_flag():
     parser = _parser()
 
-    args = parser.parse_args(["-a", "push", "-d", "/tmp/whatever", "--branch-name", "main", "--force"])
+    args = parser.parse_args(["-a", "push", "-d", "/tmp/whatever", "--branch_name", "main", "--force"])
 
     assert args.force is True
 
@@ -48,22 +48,22 @@ def test_bool_parameter_becomes_a_store_true_flag():
 def test_force_defaults_to_false_when_omitted():
     parser = _parser()
 
-    args = parser.parse_args(["-a", "push", "-d", "/tmp/whatever", "--branch-name", "main"])
+    args = parser.parse_args(["-a", "push", "-d", "/tmp/whatever", "--branch_name", "main"])
 
     assert args.force is False
 
 
 def test_reset_mode_only_accepts_soft_or_hard():
-    """Spelled --reset-mode, not --mode, to avoid clashing with the top-level
-    --mode (ui/cli) switch in cli.py -- both would otherwise write into the
-    same argparse dest."""
+    """Spelled --reset_mode, not --mode, to avoid colliding with the
+    top-level --mode (ui/cli) switch's option string in cli.py -- argparse
+    forbids defining --mode twice on the same parser."""
     parser = _parser()
 
-    args = parser.parse_args(["-a", "reset", "-d", "/tmp/whatever", "--commit", "HEAD~1", "--reset-mode", "soft"])
-    assert args.mode == "soft"
+    args = parser.parse_args(["-a", "reset", "-d", "/tmp/whatever", "--commit_id", "HEAD~1", "--reset_mode", "soft"])
+    assert args.reset_mode == "soft"
 
     with pytest.raises(SystemExit):
-        parser.parse_args(["-a", "reset", "-d", "/tmp/whatever", "--commit", "HEAD~1", "--reset-mode", "bogus"])
+        parser.parse_args(["-a", "reset", "-d", "/tmp/whatever", "--commit_id", "HEAD~1", "--reset_mode", "bogus"])
 
 
 def test_message_flag_has_short_form():
@@ -106,7 +106,7 @@ def test_run_reset_soft_dispatches_with_mode_and_commit(git_repo):
     run(parser.parse_args(["-a", "commit", "-d", str(git_repo), "-m", "second commit"]))
 
     exit_code = run(parser.parse_args(
-        ["-a", "reset", "-d", str(git_repo), "--commit", "HEAD~1", "--reset-mode", "soft"]
+        ["-a", "reset", "-d", str(git_repo), "--commit_id", "HEAD~1", "--reset_mode", "soft"]
     ))
 
     assert exit_code == 0
@@ -131,21 +131,49 @@ def test_run_optional_flag_can_be_omitted_for_a_different_action(git_repo):
     """Same underlying flag (-m/--message) is optional for tag_create."""
     parser = _parser()
 
-    exit_code = run(parser.parse_args(["-a", "tag_create", "-d", str(git_repo), "--name", "v1"]))
+    exit_code = run(parser.parse_args(["-a", "tag_create", "-d", str(git_repo), "--tag_name", "v1"]))
 
     assert exit_code == 0
 
 
-def test_run_missing_reset_mode_reports_the_renamed_flag(git_repo, capsys):
-    """The error message must say --reset-mode, not --mode -- that flag name
-    is taken by the top-level ui/cli switch."""
+def test_run_reset_mode_defaults_to_soft_when_omitted(git_repo):
+    """reset()'s mode parameter has a default of "soft", so --reset_mode is
+    optional at the CLI too -- omitting it should still succeed."""
+    (git_repo / "new.txt").write_text("new\n")
     parser = _parser()
-    args = parser.parse_args(["-a", "reset", "-d", str(git_repo), "--commit", "HEAD~1"])
+    run(parser.parse_args(["-a", "add", "-d", str(git_repo)]))
+    run(parser.parse_args(["-a", "commit", "-d", str(git_repo), "-m", "second commit"]))
+
+    exit_code = run(parser.parse_args(["-a", "reset", "-d", str(git_repo), "--commit_id", "HEAD~1"]))
+
+    assert exit_code == 0
+    from git_command import GitCommand
+    git = GitCommand(str(git_repo))
+    assert "second commit" not in git.log().stdout
+    assert "new.txt" in git.status().lines[0]
+
+
+def test_run_missing_commit_id_reports_the_flag(git_repo, capsys):
+    """--commit_id is shared by reset and cherry_pick (both take commit_id)."""
+    parser = _parser()
+    args = parser.parse_args(["-a", "reset", "-d", str(git_repo), "--reset_mode", "soft"])
 
     exit_code = run(args)
 
     assert exit_code == 1
-    assert "--reset-mode is required" in capsys.readouterr().out
+    assert "--commit_id is required" in capsys.readouterr().out
+
+
+def test_run_missing_branch_select_remote_reports_branch_name_flag(git_repo, capsys):
+    """branch_select_remote shares --branch_name with the other branch
+    actions rather than having its own --remote_branch flag."""
+    parser = _parser()
+    args = parser.parse_args(["-a", "branch_select_remote", "-d", str(git_repo)])
+
+    exit_code = run(args)
+
+    assert exit_code == 1
+    assert "--branch_name is required" in capsys.readouterr().out
 
 
 def test_run_missing_directory_for_instance_method_is_an_error(capsys):

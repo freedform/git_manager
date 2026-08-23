@@ -66,9 +66,9 @@ class GitCommand:
             command=["git", "-C", self.repo_path, "switch", branch_name]
         )
 
-    def branch_select_remote(self, remote_branch: str) -> Result:
+    def branch_select_remote(self, branch_name: str) -> Result:
         return self.__run_command(
-            command=["git", "-C", self.repo_path, "switch", "--track", remote_branch]
+            command=["git", "-C", self.repo_path, "switch", "--track", branch_name]
         )
 
     def branch_local(self) -> Result:
@@ -107,9 +107,9 @@ class GitCommand:
             cmd.append("--force-with-lease")
         return self.__run_command(command=cmd)
 
-    def reset(self, commit: str, mode: str) -> Result:
+    def reset(self, commit_id: str, reset_mode: str = "soft") -> Result:
         return self.__run_command(
-            command=["git", "-C", self.repo_path, "reset", f"--{mode}", commit]
+            command=["git", "-C", self.repo_path, "reset", f"--{reset_mode}", commit_id]
         )
 
     def log(self) -> Result:
@@ -127,19 +127,19 @@ class GitCommand:
             command=["git", "-C", self.repo_path, "remote"]
         )
 
-    def remote_add(self, name: str, url: str) -> Result:
+    def remote_add(self, remote_name: str, remote_url: str) -> Result:
         return self.__run_command(
-            command=["git", "-C", self.repo_path, "remote", "add", name, url]
+            command=["git", "-C", self.repo_path, "remote", "add", remote_name, remote_url]
         )
 
-    def remote_remove(self, name: str) -> Result:
+    def remote_remove(self, remote_name: str) -> Result:
         return self.__run_command(
-            command=["git", "-C", self.repo_path, "remote", "remove", name]
+            command=["git", "-C", self.repo_path, "remote", "remove", remote_name]
         )
 
-    def cherry_pick(self, commit: str) -> Result:
+    def cherry_pick(self, commit_id: str) -> Result:
         return self.__run_command(
-            command=["git", "-C", self.repo_path, "cherry-pick", commit]
+            command=["git", "-C", self.repo_path, "cherry-pick", commit_id]
         )
 
     def tag_list(self) -> Result:
@@ -147,23 +147,23 @@ class GitCommand:
             command=["git", "-C", self.repo_path, "tag"]
         )
 
-    def tag_create(self, name: str, message: str = None) -> Result:
+    def tag_create(self, tag_name: str, message: str = None) -> Result:
         if message:
             return self.__run_command(
-                command=["git", "-C", self.repo_path, "tag", "-a", name, "-m", message]
+                command=["git", "-C", self.repo_path, "tag", "-a", tag_name, "-m", message]
             )
         return self.__run_command(
-            command=["git", "-C", self.repo_path, "tag", name]
+            command=["git", "-C", self.repo_path, "tag", tag_name]
         )
 
-    def tag_delete(self, name: str) -> Result:
+    def tag_delete(self, tag_name: str) -> Result:
         return self.__run_command(
-            command=["git", "-C", self.repo_path, "tag", "-d", name]
+            command=["git", "-C", self.repo_path, "tag", "-d", tag_name]
         )
 
-    def tag_push(self, name: str) -> Result:
+    def tag_push(self, tag_name: str) -> Result:
         return self.__run_command(
-            command=["git", "-C", self.repo_path, "push", "origin", name]
+            command=["git", "-C", self.repo_path, "push", "origin", tag_name]
         )
 
     @staticmethod

@@ -42,24 +42,24 @@ Run `python main.py --help` for the full, current flag list — it's generated f
 | `commit` | `-d`, `-m/--message` | |
 | `fetch` | `-d` | |
 | `pull` | `-d` | |
-| `push` | `-d`, `--branch-name` | `--force` |
+| `push` | `-d`, `--branch_name` | `--force` |
 | `log` | `-d` | |
-| `branch_create` | `-d`, `--branch-name` | |
-| `branch_delete` | `-d`, `--branch-name` | |
-| `branch_select` | `-d`, `--branch-name` | |
-| `branch_select_remote` | `-d`, `--remote-branch` | |
+| `branch_create` | `-d`, `--branch_name` | |
+| `branch_delete` | `-d`, `--branch_name` | |
+| `branch_select` | `-d`, `--branch_name` | |
+| `branch_select_remote` | `-d`, `--branch_name` (e.g. `origin/feature`) | |
 | `branch_local` | `-d` | |
 | `branch_remote` | `-d` | |
-| `merge` | `-d`, `--branch-name` | |
-| `reset` | `-d`, `--commit`, `--reset-mode` (`soft`/`hard`) | |
-| `cherry_pick` | `-d`, `--commit` | |
+| `merge` | `-d`, `--branch_name` | |
+| `reset` | `-d`, `--commit_id` | `--reset_mode` (`soft`/`hard`, default `soft`) |
+| `cherry_pick` | `-d`, `--commit_id` | |
 | `remote_list` | `-d` | |
-| `remote_add` | `-d`, `--name`, `--url` | |
-| `remote_remove` | `-d`, `--name` | |
+| `remote_add` | `-d`, `--remote_name`, `--remote_url` | |
+| `remote_remove` | `-d`, `--remote_name` | |
 | `tag_list` | `-d` | |
-| `tag_create` | `-d`, `--name` | `-m/--message` (annotated tag; omit for lightweight) |
-| `tag_delete` | `-d`, `--name` | |
-| `tag_push` | `-d`, `--name` | |
+| `tag_create` | `-d`, `--tag_name` | `-m/--message` (annotated tag; omit for lightweight) |
+| `tag_delete` | `-d`, `--tag_name` | |
+| `tag_push` | `-d`, `--tag_name` | |
 | `init` | `--path` | |
 
 Examples:
@@ -67,9 +67,9 @@ Examples:
 ```
 python main.py --mode cli -a status -d ./repo
 python main.py --mode cli -a commit -d ./repo -m "fix bug"
-python main.py --mode cli -a branch_create -d ./repo --branch-name feature
-python main.py --mode cli -a push -d ./repo --branch-name main --force
-python main.py --mode cli -a reset -d ./repo --commit HEAD~1 --reset-mode soft
+python main.py --mode cli -a branch_create -d ./repo --branch_name feature
+python main.py --mode cli -a push -d ./repo --branch_name main --force
+python main.py --mode cli -a reset -d ./repo --commit_id HEAD~1 --reset_mode soft
 python main.py --mode cli -a init --path ./new-repo
 ```
 

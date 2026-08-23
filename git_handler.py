@@ -127,11 +127,11 @@ class GitMenu:
             print("No commits yet.")
 
     def _sub_history_reset(self) -> None:
-        commit = questionary.text(message="Commit ID to reset to").ask()
-        if not commit:
+        commit_id = questionary.text(message="Commit ID to reset to").ask()
+        if not commit_id:
             return
-        mode = questionary.select(message="Reset mode", choices=["soft", "hard"]).ask()
-        result = self.git.reset(commit=commit, mode=mode)
+        reset_mode = questionary.select(message="Reset mode", choices=["soft", "hard"]).ask()
+        result = self.git.reset(commit_id=commit_id, reset_mode=reset_mode)
         if not result.ok:
             print(f"Error: {result.error}")
 
@@ -181,15 +181,15 @@ class GitMenu:
         selected = questionary.autocomplete(message="Choose remote branch to checkout", choices=branches + ["<< back"]).ask()
         if not selected or selected == "<< back":
             return
-        result = self.git.branch_select_remote(remote_branch=selected)
+        result = self.git.branch_select_remote(branch_name=selected)
         if not result.ok:
             print(f"Error: {result.error}")
 
     def _git_cherry_pick(self) -> None:
-        commit = questionary.text(message="Commit ID to cherry-pick").ask()
-        if not commit:
+        commit_id = questionary.text(message="Commit ID to cherry-pick").ask()
+        if not commit_id:
             return
-        result = self.git.cherry_pick(commit=commit)
+        result = self.git.cherry_pick(commit_id=commit_id)
         if not result.ok:
             print(f"Error: {result.error}")
 
@@ -225,9 +225,9 @@ class GitMenu:
         print("\n".join(result.lines) if result.lines else "No remotes configured.")
 
     def _sub_remote_add(self) -> None:
-        name = questionary.text(message="Remote name").ask()
-        url = questionary.text(message="Remote URL").ask()
-        result = self.git.remote_add(name=name, url=url)
+        remote_name = questionary.text(message="Remote name").ask()
+        remote_url = questionary.text(message="Remote URL").ask()
+        result = self.git.remote_add(remote_name=remote_name, remote_url=remote_url)
         if not result.ok:
             print(f"Error: {result.error}")
 
@@ -240,7 +240,7 @@ class GitMenu:
             print("No remotes configured.")
             return
         selected = questionary.select(message="Choose remote to remove", choices=remotes_result.lines).ask()
-        result = self.git.remote_remove(name=selected)
+        result = self.git.remote_remove(remote_name=selected)
         if not result.ok:
             print(f"Error: {result.error}")
 
@@ -255,14 +255,14 @@ class GitMenu:
         print("\n".join(result.lines) if result.lines else "No tags found.")
 
     def _sub_tags_create(self) -> None:
-        name = questionary.text(message="Tag name").ask()
-        if not name:
+        tag_name = questionary.text(message="Tag name").ask()
+        if not tag_name:
             return
         kind = questionary.select(message="Tag type", choices=["lightweight", "annotated"]).ask()
         message = None
         if kind == "annotated":
             message = questionary.text(message="Tag message").ask()
-        result = self.git.tag_create(name=name, message=message)
+        result = self.git.tag_create(tag_name=tag_name, message=message)
         if not result.ok:
             print(f"Error: {result.error}")
 
@@ -275,7 +275,7 @@ class GitMenu:
             print("No tags found.")
             return
         selected = questionary.select(message="Choose tag to delete", choices=tags_result.lines).ask()
-        result = self.git.tag_delete(name=selected)
+        result = self.git.tag_delete(tag_name=selected)
         if not result.ok:
             print(f"Error: {result.error}")
 
@@ -288,6 +288,6 @@ class GitMenu:
             print("No tags found.")
             return
         selected = questionary.select(message="Choose tag to push", choices=tags_result.lines).ask()
-        result = self.git.tag_push(name=selected)
+        result = self.git.tag_push(tag_name=selected)
         if not result.ok:
             print(f"Error: {result.error}")
