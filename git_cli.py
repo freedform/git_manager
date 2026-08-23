@@ -44,13 +44,13 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         help="File to stage, relative to the repo (add, default '.'); or directory to create (init)",
     )
     parser.add_argument(
-        "--branch_name", default=None,
+        "-b", "--branch_name", default=None,
         help="Branch name: new branch (branch_create); branch to delete/switch to (branch_delete/branch_select); "
              "branch to push (push); branch to merge from (merge); remote-tracking branch to check out, e.g. "
              "'origin/feature' (branch_select_remote)",
     )
     parser.add_argument(
-        "--commit_id", default=None,
+        "-c", "--commit_id", default=None,
         help="Commit to reset to (reset); or commit to cherry-pick (cherry_pick)",
     )
     parser.add_argument(
@@ -59,19 +59,19 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
              "lightweight tag)",
     )
     parser.add_argument(
-        "--force", action="store_true",
+        "-f", "--force", action="store_true",
         help="Force-push with lease (push)",
     )
     parser.add_argument(
-        "--remote_name", default=None,
+        "-r", "--remote_name", default=None,
         help="Remote name (remote_add, remote_remove)",
     )
     parser.add_argument(
-        "--tag_name", default=None,
+        "-t", "--tag_name", default=None,
         help="Tag name (tag_create, tag_delete, tag_push)",
     )
     parser.add_argument(
-        "--remote_url", default=None,
+        "-u", "--remote_url", default=None,
         help="Remote URL (remote_add)",
     )
     parser.add_argument(
