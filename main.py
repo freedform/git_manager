@@ -1,18 +1,28 @@
-import questionary
+import sys
 from pathlib import Path
-from git_handler import GitMenu
-from git_command import GitCommand
-from status import MainStatus
+import questionary
 from cli import parse_args
+from git_cli import run as run_cli
+from git_command import GitCommand
+from git_handler import GitMenu
+from status import MainStatus
 
 
 def find_git_repos(base_path: str) -> dict:
+    """Scan base_path for git repos, keyed by directory name for a short,
+    friendly picker -- except when two repos share a directory name, in
+    which case both are disambiguated with their path relative to base_path
+    instead of one silently overwriting the other."""
     base = Path(base_path)
-    repos = {}
+    repo_dirs = [path.parent for path in base.rglob('.git') if path.is_dir()]
 
-    for path in base.rglob('.git'):
-        if path.is_dir():
-            repos[path.parent.name] = path.parent.as_posix()
+    names = [repo_dir.name for repo_dir in repo_dirs]
+    repos = {}
+    for repo_dir in repo_dirs:
+        key = repo_dir.name
+        if names.count(key) > 1:
+            key = f"{key} ({repo_dir.relative_to(base).as_posix()})"
+        repos[key] = repo_dir.as_posix()
 
     return repos
 
@@ -31,6 +41,12 @@ def run_repo_menu(repo_dir_path: str) -> None:
 
 def main():
     args = parse_args()
+    if args.app_mode == "cli":
+        if not args.action:
+            print("Error: -a/--action is required when --mode cli")
+            sys.exit(1)
+        sys.exit(run_cli(args))
+
     main_status = MainStatus(base_dir=args.base_dir)
     actions = [
         "select_base_directory",

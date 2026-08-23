@@ -1,6 +1,7 @@
 import subprocess
 from result import Result
 
+
 class GitCommand:
 
     def __init__(self, repo_path: str) -> None:
@@ -30,7 +31,14 @@ class GitCommand:
             return Result(
                 stdout=None,
                 ok=False,
-                error=e.stderr.strip()
+                error=(e.stderr or e.stdout or "").strip()
+            )
+
+        except FileNotFoundError as e:
+            return Result(
+                stdout=None,
+                ok=False,
+                error=f"git executable not found: {e}",
             )
 
     def status(self) -> Result:
@@ -172,4 +180,6 @@ class GitCommand:
         except subprocess.TimeoutExpired as e:
             return Result(stdout=None, ok=False, error=str(e))
         except subprocess.CalledProcessError as e:
-            return Result(stdout=None, ok=False, error=e.stderr.strip())
+            return Result(stdout=None, ok=False, error=(e.stderr or e.stdout or "").strip())
+        except FileNotFoundError as e:
+            return Result(stdout=None, ok=False, error=f"git executable not found: {e}")

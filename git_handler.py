@@ -1,5 +1,5 @@
-import questionary
 from pathlib import Path
+import questionary
 from git_command import GitCommand
 
 
