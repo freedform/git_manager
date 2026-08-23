@@ -26,8 +26,18 @@ def test_action_choices_cover_every_public_git_command_method():
 
     args = parser.parse_args(["-a", "status", "-d", "/tmp/whatever"])
 
-    assert args.action == "status"
+    assert args.action == ["status"]
     assert args.directory == "/tmp/whatever"
+
+
+def test_action_accepts_multiple_values_in_order():
+    """-a/--action takes nargs='+', preserving the order given on the
+    command line rather than sorting or deduplicating it."""
+    parser = _parser()
+
+    args = parser.parse_args(["-a", "commit", "add", "status", "-d", "/tmp/whatever"])
+
+    assert args.action == ["commit", "add", "status"]
 
 
 def test_action_rejects_unknown_values():
@@ -35,6 +45,13 @@ def test_action_rejects_unknown_values():
 
     with pytest.raises(SystemExit):
         parser.parse_args(["-a", "not_a_real_action", "-d", "/tmp/whatever"])
+
+
+def test_action_rejects_unknown_value_anywhere_in_the_list():
+    parser = _parser()
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["-a", "status", "not_a_real_action", "-d", "/tmp/whatever"])
 
 
 def test_bool_parameter_becomes_a_store_true_flag():
@@ -97,6 +114,49 @@ def test_run_commit_end_to_end(git_repo):
     assert exit_code == 0
     from git_command import GitCommand
     assert "cli commit" in GitCommand(str(git_repo)).log().stdout
+
+
+def test_run_chains_multiple_actions_in_one_invocation(git_repo):
+    """-a add commit -m msg runs add then commit, in that order, from a
+    single run() call -- not two separate invocations."""
+    (git_repo / "new.txt").write_text("new\n")
+    parser = _parser()
+
+    exit_code = run(parser.parse_args(["-a", "add", "commit", "-d", str(git_repo), "-m", "chained commit"]))
+
+    assert exit_code == 0
+    from git_command import GitCommand
+    assert "chained commit" in GitCommand(str(git_repo)).log().stdout
+
+
+def test_run_stops_at_first_failing_action(git_repo, capsys):
+    """commit with nothing staged fails; a chained action after it (status)
+    must not run."""
+    parser = _parser()
+
+    exit_code = run(parser.parse_args(["-a", "commit", "status", "-d", str(git_repo), "-m", "empty"]))
+
+    assert exit_code == 1
+    out = capsys.readouterr().out
+    assert "Error: " in out
+    assert "==> status" not in out
+
+
+def test_run_prints_a_header_per_action_only_when_chained(git_repo, capsys):
+    """A single-action invocation's output is unchanged (no header line);
+    a chained invocation prints '==> <action>' before each action's output
+    so multi-action runs stay readable."""
+    parser = _parser()
+
+    run(parser.parse_args(["-a", "status", "-d", str(git_repo)]))
+    assert "==>" not in capsys.readouterr().out
+
+    (git_repo / "new.txt").write_text("new\n")
+    run(parser.parse_args(["-a", "add", "status", "-d", str(git_repo)]))
+    out = capsys.readouterr().out
+    assert "==> add" in out
+    assert "==> status" in out
+    assert out.index("==> add") < out.index("==> status")
 
 
 def test_run_reset_soft_dispatches_with_mode_and_commit(git_repo):
@@ -213,7 +273,7 @@ def test_full_parse_args_includes_the_flat_cli(monkeypatch):
 
     args = parse_args()
 
-    assert args.action == "status"
+    assert args.action == ["status"]
     assert args.directory == "/tmp/whatever"
 
 
@@ -232,7 +292,7 @@ def test_app_mode_cli_must_be_explicit(monkeypatch):
     args = parse_args()
 
     assert args.app_mode == "ui"
-    assert args.action == "status"  # parsed, but main() ignores it unless --mode cli
+    assert args.action == ["status"]  # parsed, but main() ignores it unless --mode cli
 
 
 def test_app_mode_only_accepts_ui_or_cli(monkeypatch):
