@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
+
 import questionary
+
 from cli import parse_args
 from git_cli import run as run_cli
 from git_command import GitCommand
